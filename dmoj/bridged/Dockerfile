@@ -1,4 +1,4 @@
-FROM ninjaclasher/dmoj-base:latest
+FROM mreagle/diplom-base:5fc57d3dc277
 
 EXPOSE 9999
 EXPOSE 9998

@@ -23,7 +23,7 @@ services:
 
   texoid:
     build:
-      context: simple-kafka
+      context: .
       dockerfile: ./texoid/Dockerfile
     image: ninjaclasher/dmoj-texoid
     init: true
@@ -33,7 +33,7 @@ services:
 
   pdfoid:
     build:
-      context: simple-kafka
+      context: .
       dockerfile: ./pdfoid/Dockerfile
     image: ninjaclasher/dmoj-pdfoid
     init: true
@@ -45,7 +45,7 @@ services:
 
   mathoid:
     build:
-      context: simple-kafka
+      context: .
       dockerfile: ./mathoid/Dockerfile
     image: ninjaclasher/dmoj-mathoid
     init: true
@@ -57,13 +57,13 @@ services:
 
   base:
     build:
-      context: simple-kafka
+      context: .
       dockerfile: ./base/Dockerfile
     image: ninjaclasher/dmoj-base
     network_mode: none
   site:
     build:
-      context: simple-kafka
+      context: .
       dockerfile: ./site/Dockerfile
     image: ninjaclasher/dmoj-site
     init: true
@@ -91,7 +91,7 @@ services:
 
   celery:
     build:
-      context: simple-kafka
+      context: .
       dockerfile: ./celery/Dockerfile
     image: ninjaclasher/dmoj-celery
     init: true
@@ -114,7 +114,7 @@ services:
 
   bridged:
     build:
-      context: simple-kafka
+      context: .
       dockerfile: ./bridged/Dockerfile
     image: ninjaclasher/dmoj-bridged
     init: true
@@ -140,7 +140,7 @@ services:
 
   wsevent:
     build:
-      context: simple-kafka
+      context: .
       dockerfile: ./wsevent/Dockerfile
     image: ninjaclasher/dmoj-wsevent
     init: true
