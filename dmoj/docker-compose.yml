@@ -1,4 +1,6 @@
+#docker compose up -d
 version: '3.7'
+
 services:
   db:
     container_name: dmoj_mysql
@@ -6,50 +8,62 @@ services:
     restart: always
     volumes:
       - ./database/:/var/lib/mysql/
-    env_file: [environment/mysql.env, environment/mysql-admin.env]
-    networks: [db]
+    env_file:
+      - environment/mysql.env
+      - environment/mysql-admin.env
+    networks:
+      - db
+
   redis:
     container_name: dmoj_redis
     image: redis:alpine
     restart: always
-    networks: [site]
+    networks:
+      - site
+
   texoid:
     build:
-      context: .
+      context: simple-kafka
       dockerfile: ./texoid/Dockerfile
     image: ninjaclasher/dmoj-texoid
     init: true
     restart: unless-stopped
-    networks: [site]
+    networks:
+      - site
+
   pdfoid:
     build:
-      context: .
+      context: simple-kafka
       dockerfile: ./pdfoid/Dockerfile
     image: ninjaclasher/dmoj-pdfoid
     init: true
     restart: unless-stopped
-    networks: [site]
+    networks:
+      - site
     cap_add:
       - SYS_ADMIN
+
   mathoid:
     build:
-      context: .
+      context: simple-kafka
       dockerfile: ./mathoid/Dockerfile
     image: ninjaclasher/dmoj-mathoid
     init: true
     restart: unless-stopped
     volumes:
       - ./mathoid/config.yaml:/node_modules/mathoid/config.yaml
-    networks: [site]
+    networks:
+      - site
+
   base:
     build:
-      context: .
+      context: simple-kafka
       dockerfile: ./base/Dockerfile
     image: ninjaclasher/dmoj-base
     network_mode: none
   site:
     build:
-      context: .
+      context: simple-kafka
       dockerfile: ./site/Dockerfile
     image: ninjaclasher/dmoj-site
     init: true
@@ -63,12 +77,21 @@ services:
       - ./problems/:/problems/
       - ./repo/:/site/
     working_dir: /site/
-    env_file: [environment/mysql.env, environment/site.env]
-    networks: [site, nginx, db]
-    depends_on: [base, db, redis]
+    env_file:
+      - environment/mysql.env
+      - environment/site.env
+    networks:
+      - site
+      - nginx
+      - db
+    depends_on:
+      - base
+      - db
+      - redis
+
   celery:
     build:
-      context: .
+      context: simple-kafka
       dockerfile: ./celery/Dockerfile
     image: ninjaclasher/dmoj-celery
     init: true
@@ -78,12 +101,20 @@ services:
       - datacache:/datacache/
       - ./repo/:/site/
     working_dir: /site/
-    env_file: [environment/mysql.env, environment/site.env]
-    networks: [site, db]
-    depends_on: [base, db, redis]
+    env_file:
+      - environment/mysql.env
+      - environment/site.env
+    networks:
+      - site
+      - db
+    depends_on:
+      - base
+      - db
+      - redis
+
   bridged:
     build:
-      context: .
+      context: simple-kafka
       dockerfile: ./bridged/Dockerfile
     image: ninjaclasher/dmoj-bridged
     init: true
@@ -93,14 +124,23 @@ services:
       - ./problems/:/problems/
       - ./repo/:/site/
     working_dir: /site/
-    env_file: [environment/mysql.env, environment/site.env]
-    networks: [site, nginx, db]
+    env_file:
+      - environment/mysql.env
+      - environment/site.env
+    networks:
+      - site
+      - nginx
+      - db
     ports:
       - 9999:9999
-    depends_on: [base, db, redis]
+    depends_on:
+      - base
+      - db
+      - redis
+
   wsevent:
     build:
-      context: .
+      context: simple-kafka
       dockerfile: ./wsevent/Dockerfile
     image: ninjaclasher/dmoj-wsevent
     init: true
@@ -108,8 +148,13 @@ services:
     volumes:
       - ./repo/:/app/site/
     working_dir: /app/site
-    env_file: [environment/mysql.env, environment/site.env]
-    networks: [site, nginx]
+    env_file:
+      - environment/mysql.env
+      - environment/site.env
+    networks:
+      - site
+      - nginx
+
   nginx:
     container_name: dmoj_nginx
     image: nginx:alpine
@@ -123,12 +168,33 @@ services:
       - cache:/cache/
       - ./media/:/media/
       - ./nginx/conf.d/:/etc/nginx/conf.d/
-    networks: [nginx]
-    depends_on: [site, wsevent]
+    networks:
+      - nginx
+    depends_on:
+      - site
+      - wsevent
+
+  judge4:
+    image: dmoj/judge-tier1:latest
+    container_name: judge4
+    ports:
+      - "9998:9998"
+    volumes:
+      - /Users/o.hubenko/IdeaProjects/judge-server/testsuite:/problems
+    cap_add:
+      - SYS_PTRACE
+    networks:
+      - site
+      - nginx
+      - db
+    restart: always
+    command: run -a "9942" -p "9999" -c /problems/judge.yml "127.0.0.1" "test" "1B/c/mP4Ih3T9MnCvaOkbtt7Klc9LXpyHlKkXnYNJ+idEEqVrI6Qx2oA27GbB8FJFDL/+jeIwRrywrwZElBhnWN1wOEEt97oSgeY"
+
 networks:
   site:
   db:
   nginx:
+
 volumes:
   assets:
   pdfcache:
